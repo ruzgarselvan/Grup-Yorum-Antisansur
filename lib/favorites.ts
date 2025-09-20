@@ -15,15 +15,16 @@ export const toggleFavorite = (songId: string): boolean => {
   if (!songId || !isClient()) return false;
 
   const favorites = getFavorites();
-  const favoriteSet = new Set(favorites);
+  let updated: string[];
+  let isNowFavorite = false;
 
-  if (favoriteSet.has(songId)) {
-    favoriteSet.delete(songId);
+  if (favorites.includes(songId)) {
+    updated = favorites.filter((id) => id !== songId);
   } else {
-    favoriteSet.add(songId);
+    updated = [songId, ...favorites];
+    isNowFavorite = true;
   }
 
-  const updated = Array.from(favoriteSet);
   saveToStorage(FAVORITES_KEY, updated);
-  return favoriteSet.has(songId);
+  return isNowFavorite;
 };

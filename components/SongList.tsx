@@ -1,7 +1,7 @@
 'use client';
 
 import { type KeyboardEvent, useMemo, useState } from 'react';
-import { ArrowUpDown, RefreshCcw, Search } from 'lucide-react';
+import { ArrowUpDown, Heart, RefreshCcw, Search } from 'lucide-react';
 
 import FavoriteButton from '@/components/FavoriteButton';
 import type { Song } from '@/types';
@@ -27,39 +27,47 @@ interface SongListProps {
   currentSong: Song | null;
   onSongSelect: (song: Song) => void;
   onRefresh: () => void;
+  onFavoriteToggle?: (song: Song, isFavorite: boolean) => void;
+  favoriteOrder: string[];
+  showFavoritesOnly: boolean;
+  onFavoritesFilterToggle: () => void;
 }
 
-export default function SongList({ songs, currentSong, onSongSelect, onRefresh }: SongListProps) {
+export default function SongList({ songs, currentSong, onSongSelect, onRefresh, onFavoriteToggle, favoriteOrder, showFavoritesOnly, onFavoritesFilterToggle }: SongListProps) {
   const [query, setQuery] = useState('');
   const [ascending, setAscending] = useState(true);
 
   const filteredSongs = useMemo(() => {
+    const favoriteSet = new Set(favoriteOrder);
     const normalizedQuery = normalizeText(query.trim());
-    const list = songs.filter((song) => {
-      if (!normalizedQuery) return true;
-      const normalizedTitle = normalizeText(song.title);
-      const normalizedArtist = normalizeText(song.artist);
-      return (
-        normalizedTitle.includes(normalizedQuery) ||
-        normalizedArtist.includes(normalizedQuery)
-      );
-    });
+
+    const list = songs
+      .filter((song) => {
+        if (!normalizedQuery) return true;
+        const normalizedTitle = normalizeText(song.title);
+        const normalizedArtist = normalizeText(song.artist);
+        return (
+          normalizedTitle.includes(normalizedQuery) ||
+          normalizedArtist.includes(normalizedQuery)
+        );
+      })
+      .filter((song) => {
+        if (!showFavoritesOnly) return true;
+        return favoriteSet.has(song.id);
+      });
 
     const direction = ascending ? 1 : -1;
 
     return list.sort((a, b) => {
-      const titleA = normalizeText(a.title);
-      const titleB = normalizeText(b.title);
-      if (titleA !== titleB) {
-        return titleA < titleB ? -direction : direction;
+      const comparator = normalizeText(a.title).localeCompare(normalizeText(b.title), 'tr');
+      if (comparator !== 0) {
+        return direction === 1 ? comparator : -comparator;
       }
 
-      const artistA = normalizeText(a.artist);
-      const artistB = normalizeText(b.artist);
-      if (artistA === artistB) return 0;
-      return artistA < artistB ? -direction : direction;
+      const artistComparator = normalizeText(a.artist).localeCompare(normalizeText(b.artist), 'tr');
+      return direction === 1 ? artistComparator : -artistComparator;
     });
-  }, [songs, query, ascending]);
+  }, [songs, query, ascending, favoriteOrder, showFavoritesOnly]);
 
   const handleRefresh = () => {
     onRefresh();
@@ -78,8 +86,7 @@ export default function SongList({ songs, currentSong, onSongSelect, onRefresh }
           className="song-toolbar-button"
           aria-label="Listeyi yenile"
         >
-          <RefreshCcw className="w-4 h-4" />
-          <span>Yenile</span>
+          <RefreshCcw className="h-4 w-4" />
         </button>
         <button
           type="button"
@@ -87,8 +94,16 @@ export default function SongList({ songs, currentSong, onSongSelect, onRefresh }
           className="song-toolbar-button"
           aria-label="Sıralamayı değiştir"
         >
-          <ArrowUpDown className="w-4 h-4" />
-          <span>Sırala</span>
+          <ArrowUpDown className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onFavoritesFilterToggle}
+          className={`song-toolbar-button ${showFavoritesOnly ? 'bg-[#e74c3c]/20 text-[#e74c3c]' : ''}`.trim()}
+          aria-pressed={showFavoritesOnly}
+          aria-label={showFavoritesOnly ? 'Favorileri kapat' : 'Sadece favorileri göster'}
+        >
+          <Heart className={`h-4 w-4 transition-colors ${showFavoritesOnly ? 'text-[#e74c3c] fill-[#e74c3c]/80' : ''}`} />
         </button>
         <div className="relative ml-auto w-full min-[420px]:w-auto min-[420px]:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
@@ -126,7 +141,10 @@ export default function SongList({ songs, currentSong, onSongSelect, onRefresh }
                   <p className="font-medium text-white">{song.title}</p>
                   <p className="text-sm text-white/60">{song.artist}</p>
                 </div>
-                <FavoriteButton songId={song.id} />
+                <FavoriteButton
+                  songId={song.id}
+                  onToggle={(next) => onFavoriteToggle?.(song, next)}
+                />
               </div>
             </div>
           );

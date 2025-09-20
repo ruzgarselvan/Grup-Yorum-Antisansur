@@ -4,6 +4,7 @@ import { type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } fr
 
 import PlayerControls from '@/components/PlayerControls';
 import SongList from '@/components/SongList';
+import { getFavorites } from '@/lib/favorites';
 import { clamp, loadFromStorage, preloadNextSong, saveToStorage } from '@/lib/utils';
 import type { Song } from '@/types';
 
@@ -81,6 +82,7 @@ interface MusicPlayerProps {
 export default function MusicPlayer({ initialSongs }: MusicPlayerProps) {
   const initialSongsRef = useRef(initialSongs);
   const [songs, setSongs] = useState(initialSongs);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
@@ -96,8 +98,14 @@ export default function MusicPlayer({ initialSongs }: MusicPlayerProps) {
   const lastTapRef = useRef<number>(0);
   const pendingSeekRef = useRef<number | null>(null);
   const autoPlayRef = useRef(false);
+  const currentSongIdRef = useRef<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const currentSong = useMemo(() => songs[currentIndex] ?? null, [songs, currentIndex]);
+
+  useEffect(() => {
+    currentSongIdRef.current = currentSong?.id ?? null;
+  }, [currentSong?.id]);
 
   useEffect(() => {
     const storedPositions = loadFromStorage<PositionMap>(POSITIONS_KEY, {});
@@ -108,7 +116,27 @@ export default function MusicPlayer({ initialSongs }: MusicPlayerProps) {
   useEffect(() => {
     initialSongsRef.current = initialSongs;
     setSongs(initialSongs);
+
+    const currentId = currentSongIdRef.current;
+    if (currentId) {
+      const nextIndex = initialSongs.findIndex((song) => song.id === currentId);
+      if (nextIndex >= 0) {
+        setCurrentIndex(nextIndex);
+        return;
+      }
+    }
+
+    if (!initialSongs.length) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    setCurrentIndex((prevIndex) => Math.min(prevIndex, initialSongs.length - 1));
   }, [initialSongs]);
+
+  useEffect(() => {
+    setFavorites(getFavorites());
+  }, []);
 
   useEffect(() => {
     const storedVolume = clamp(loadFromStorage<number>(VOLUME_KEY, 0.7), 0, 1);
@@ -172,6 +200,21 @@ export default function MusicPlayer({ initialSongs }: MusicPlayerProps) {
       preloadNextSong(songs[nextIndex].filePath);
     }
   }, [currentIndex, songs, shuffle, repeatMode]);
+
+  const handleFavoriteToggle = useCallback(
+    (_song: Song, _isFavorite: boolean) => {
+      const updatedFavorites = getFavorites();
+      setFavorites(updatedFavorites);
+      if (showFavoritesOnly && !updatedFavorites.length) {
+        setShowFavoritesOnly(false);
+      }
+    },
+    [showFavoritesOnly]
+  );
+
+  const handleFavoritesFilterToggle = useCallback(() => {
+    setShowFavoritesOnly((prev) => !prev);
+  }, []);
 
   const handleTimeUpdate = useCallback(() => {
     const audio = audioRef.current;
@@ -490,6 +533,10 @@ export default function MusicPlayer({ initialSongs }: MusicPlayerProps) {
             currentSong={currentSong}
             onSongSelect={handleSongSelect}
             onRefresh={handleRefresh}
+            onFavoriteToggle={handleFavoriteToggle}
+            favoriteOrder={favorites}
+            showFavoritesOnly={showFavoritesOnly}
+            onFavoritesFilterToggle={handleFavoritesFilterToggle}
           />
         </div>
 

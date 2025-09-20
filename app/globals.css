@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #04121c;
+  --bg-secondary: #082325;
+  --bg-card: rgba(14, 165, 233, 0.08);
+  --bg-card-hover: rgba(34, 197, 94, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #5eead4;
+  --accent-primary: #0ea5e9;
+  --accent-secondary: #22c55e;
+  --border-color: rgba(14, 165, 233, 0.12);
+  --shadow: rgba(2, 32, 49, 0.4);
+  --heart-red: #e74c3c;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(14, 165, 233, 0.24), transparent 42%),
+      radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.24), transparent 48%),
+      var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+.main-container {
+  width: min(420px, 92%);
+  height: min(560px, calc(100dvh - 24px));
+  margin: 12px auto;
+  background: linear-gradient(135deg, rgba(11, 36, 52, 0.95) 0%, rgba(8, 61, 50, 0.95) 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px var(--shadow);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    width: min(100%, 380px);
+    height: calc(100dvh - 16px);
+    border-radius: 14px;
+    margin: 8px auto;
+  }
+}
+
+.song-item {
+  @apply mb-2 flex items-center justify-between rounded-xl border transition-all duration-300 cursor-pointer px-3.5 py-2.5 text-sm;
+  background-color: var(--bg-card);
+  border-color: transparent;
+}
+
+.song-item.active {
+  @apply text-white shadow-xl;
+  background-image: linear-gradient(120deg, var(--accent-primary), var(--accent-secondary));
+  border-color: transparent;
+}
+
+.song-item:hover {
+  @apply translate-x-[2px];
+}
+
+.song-item:not(.active):hover {
+  background-color: var(--bg-card-hover);
+  border-color: rgba(14, 165, 233, 0.2);
+}
+
+.song-toolbar-button {
+  @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/80 transition-all duration-300 hover:bg-white/10;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(14, 165, 233, 0.4) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.4);
+  border-radius: 999px;
+}
+
+.progress-container {
+  @apply relative w-full h-1.5 bg-white/20 rounded-full cursor-pointer;
+}
+
+.progress-bar {
+  @apply h-full rounded-full transition-all duration-100 relative;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.progress-bar::after {
+  content: '';
+  @apply absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-white shadow-lg;
+}
+
+.play-button {
+  @apply flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl;
+  background-image: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.play-button:hover {
+  background-image: linear-gradient(135deg, #38bdf8, #4ade80);
+}
+
+.control-button {
+  @apply flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-all duration-300 hover:bg-white/10 hover:text-white;
+}
+
+input[type='range'] {
+  accent-color: var(--accent-secondary);
+}
+
+@media (min-width: 640px) {
+  .main-container {
+    width: min(420px, 92%);
+  }
+}
+
+@media (min-width: 768px) {
+  .main-container {
+    width: min(420px, 92%);
+    height: min(600px, calc(100dvh - 32px));
+    margin: 16px auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-container {
+    width: min(420px, 92%);
+    height: min(660px, calc(100dvh - 40px));
+  }
+}
